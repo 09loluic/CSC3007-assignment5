@@ -1,0 +1,106 @@
+<html><head>
+              <title>Assignment Lab 5 - Singapore Map With PSI</title>
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+              <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.0/MarkerCluster.Default.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js"></script>
+
+              <style>
+                  .circle {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 50%;
+    border-style: solid;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .circle.circle1 {
+    background: rgba(0, 57, 128, 0.2);
+    border-color: #3388FF;
+    color: white;
+  }
+  .circle.circle2 {
+    background: rgba(0, 57, 128, 0.2);
+    border-color: green;
+    color: yellow;
+  }
+              </style>
+            </head>
+            <body>
+              <h1>Singapore Map</h1>
+              <div id='mapdiv' style='height:800px;'></div>
+            </body>
+          <script>
+            var center = L.bounds([1.56073, 104.11475], [1.16, 103.502]).getCenter();
+            var map = L.map('mapdiv').setView([center.x, center.y], 12);
+  
+            var basemap = L.tileLayer('https://maps-{s}.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
+              detectRetina: true,
+              maxZoom: 18,
+              minZoom: 11
+            });
+  
+            map.setMaxBounds([[1.56073, 104.1147], [1.16, 103.502]]);
+            basemap.addTo(map);
+  
+            function getLocation() {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+              } 
+            }
+  
+            function showPosition(position) {           
+              marker = new L.Marker([position.coords.latitude, position.coords.longitude], {bounceOnAdd: false}).addTo(map);             
+              var popup = L.popup()
+              .setLatLng([position.coords.latitude, position.coords.longitude]) 
+              .setContent('You are here!')
+              .openOn(map);         
+            }
+     //Load Json data from the server and draw the map
+        function loadMap() {
+      
+            $.ajax({
+                url: 'https://api.data.gov.sg/v1/environment/psi',
+                contentType: "application/json",
+                dataType: "json",
+                success: function(datas) {
+                    console.log(datas);
+                    
+                    var markers = L.markerClusterGroup();
+for(var i = 0;i < datas["region_metadata"].length;i++){
+
+    const marker = circleWithText2([datas["region_metadata"][i]["label_location"]["latitude"], 
+    datas["region_metadata"][i]["label_location"]["longitude"]], datas["items"][0]["readings"]["psi_twenty_four_hourly"][datas["region_metadata"][i]["name"]], 30, 3, 'circle1').addTo(map);
+    markers.addLayer(marker)
+ 
+}
+map.addLayer(markers);
+
+
+                    
+                }
+            });
+        }
+        function circleWithText2(latLng, txt, radius, borderWidth, circleClass) {
+  var size = radius * 2;
+  var style = 'style="width: ' + size + 'px; height: ' + size + 'px; border-width: ' + borderWidth + 'px;"';
+  var iconSize = size + (borderWidth * 2);
+  var icon = L.divIcon({
+    html: '<span class="' + 'circle ' + circleClass + '" ' + style + '>' + txt + '</span>',
+    className: '',
+    iconSize: [iconSize, iconSize]
+  });
+  var marker = L.marker(latLng, {
+    icon: icon
+  });
+  return(marker);
+}
+loadMap();
+          </script>
+          </html>
+  
+        
